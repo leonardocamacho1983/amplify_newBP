@@ -11,6 +11,7 @@ const NAV = [
   { href: "/modelo", idx: "04", label: "Modelo de negócio" },
   { href: "/gtm", idx: "05", label: "GTM & Funil" },
   { href: "/bp", idx: "06", label: "BP vivo" },
+  { href: "/mcp", idx: "07", label: "MCP para sócios" },
 ];
 
 export default function SideNav() {

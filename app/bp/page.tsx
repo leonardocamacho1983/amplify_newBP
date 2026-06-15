@@ -43,31 +43,92 @@ function sourcesByYear(m: ModelResult) {
   ];
 }
 
-function cascadeForYear(m: ModelResult, y: number) {
+interface CChild { label: string; value: number }
+interface CRow { label: string; value: number; type: string; key?: string; children?: CChild[] }
+interface CCat { label: string; value: number }
+
+function cascadeForYear(m: ModelResult, y: number): { rows: CRow[]; categories: CCat[]; receita: number } {
   const sl = m.months.slice(y * 12, y * 12 + 12);
   const sum = (f: (r: MonthRow) => number) => sl.reduce((a, r) => a + f(r), 0);
+
   const receita = sum((r) => r.receitaBruta);
   const impostos = sum((r) => r.impostos);
-  const cogs = sum((r) => r.cogsProgramas + r.cogsBootcamp + r.cogsComunidade);
-  const comissoes = sum((r) => r.comissaoInterna - r.comissaoRede);
-  const custoRede = sum((r) => r.custoRede);
+
+  const cogsProg = sum((r) => r.cogsProgramas);
+  const cogsBoot = sum((r) => r.cogsBootcamp);
+  const cogsCom = sum((r) => r.cogsComunidade);
+  const cogs = cogsProg + cogsBoot + cogsCom;
+
+  const comInterno = sum((r) => r.comissaoInterna);   // já negativo
+  const comRede = sum((r) => -r.comissaoRede);         // entra como redutor
+  const comissoes = comInterno + comRede;
+
+  const custoTime = sum((r) => -r.custoTimeRede);
+  const custoForm = sum((r) => -r.custoFormacaoRede);
+  const custoRede = custoTime + custoForm;
+
   const ga = sum((r) => r.ga);
+  // Breakdown de G&A proporcional: nos anos 2-3 o total é escalado (GA_GROWTH_*),
+  // mas mantemos o mix de composição do ano 1 para detalhar as cinco linhas.
+  const rawGestao = sum((r) => r.gaGestao);
+  const rawVendas = sum((r) => r.gaVendas);
+  const rawMkt = sum((r) => r.gaMarketing);
+  const rawProd = sum((r) => r.gaProduto);
+  const rawSoft = sum((r) => r.gaSoftware);
+  const rawGa = rawGestao + rawVendas + rawMkt + rawProd + rawSoft;
+  const sc = rawGa === 0 ? 0 : ga / rawGa;
+
   const recLiq = receita + impostos;
   const mc = recLiq + cogs;
   const mo = mc + comissoes + custoRede;
   const ebitda = mo + ga;
-  return [
+
+  const rows: CRow[] = [
     { label: "Receita bruta", value: receita, type: "in" },
     { label: "(−) Impostos s/ receita", value: impostos, type: "sub" },
     { label: "Receita líquida", value: recLiq, type: "subtotal" },
-    { label: "(−) COGS — entrega", value: cogs, type: "sub" },
+    {
+      label: "(−) COGS — entrega", value: cogs, type: "sub", key: "cogs", children: [
+        { label: "COGS programas", value: cogsProg },
+        { label: "COGS bootcamp + capacitação", value: cogsBoot },
+        { label: "COGS comunidade", value: cogsCom },
+      ],
+    },
     { label: "Margem de contribuição", value: mc, type: "subtotal" },
-    { label: "(−) Comissões (interno + rede)", value: comissoes, type: "sub" },
-    { label: "(−) Custo de rede", value: custoRede, type: "sub" },
+    {
+      label: "(−) Comissões (interno + rede)", value: comissoes, type: "sub", key: "comissoes", children: [
+        { label: "Comissão — time interno", value: comInterno },
+        { label: "Comissão — rede", value: comRede },
+      ],
+    },
+    {
+      label: "(−) Custo de rede", value: custoRede, type: "sub", key: "custoRede", children: [
+        { label: "Time central", value: custoTime },
+        { label: "Formação de Amplifiers", value: custoForm },
+      ],
+    },
     { label: "Margem operacional", value: mo, type: "subtotal" },
-    { label: "(−) G&A / estrutura", value: ga, type: "sub" },
+    {
+      label: "(−) G&A / estrutura", value: ga, type: "sub", key: "ga", children: [
+        { label: "Gestão", value: rawGestao * sc },
+        { label: "Vendas / Solutions", value: rawVendas * sc },
+        { label: "Marketing", value: rawMkt * sc },
+        { label: "Produto", value: rawProd * sc },
+        { label: "Software / Jurídico / PR / Ads", value: rawSoft * sc },
+      ],
+    },
     { label: "EBITDA", value: ebitda, type: "ebitda" },
   ];
+
+  const categories: CCat[] = [
+    { label: "COGS", value: -cogs },
+    { label: "Comissões", value: -comissoes },
+    { label: "Custo de rede", value: -custoRede },
+    { label: "G&A", value: -ga },
+    { label: "Impostos", value: -impostos },
+  ];
+
+  return { rows, categories, receita };
 }
 
 function CTooltip({ active, payload, label }: { active?: boolean; payload?: { name: string; value: number; color: string }[]; label?: string }) {
@@ -85,10 +146,21 @@ function CTooltip({ active, payload, label }: { active?: boolean; payload?: { na
   );
 }
 
+type FlashDir = "up" | "down";
+interface FlashState { cells: Record<string, FlashDir>; nonce: number }
+
 export default function BpPage() {
   const [scenario, setScenario] = useState<ScenarioKey>("realista");
   const [a, setA] = useState<Assumptions>({ ...SCENARIOS.realista });
   const [cYear, setCYear] = useState(0);
+
+  // acordeão de premissas — primeira categoria aberta por padrão
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => ({ [GROUPS[0].title]: true }));
+  const toggleGroup = (t: string) => setOpenGroups((p) => ({ ...p, [t]: !p[t] }));
+
+  // linhas de custo expansíveis na cascata
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const toggleRow = (k: string) => setExpanded((p) => ({ ...p, [k]: !p[k] }));
 
   const model = useMemo(() => runModel(a), [a]);
 
@@ -103,10 +175,45 @@ export default function BpPage() {
 
   const sources = useMemo(() => sourcesByYear(model), [model]);
   const cascade = useMemo(() => cascadeForYear(model, cYear), [model, cYear]);
+  const maxCat = useMemo(() => Math.max(...cascade.categories.map((c) => c.value), 1), [cascade]);
   const ebitdaLine = useMemo(
     () => model.months.map((r) => ({ m: r.m, ebitda: Math.round(r.ebitda), acum: Math.round(r.ebitdaAcumulado) })),
     [model]
   );
+
+  // Feedback de impacto: a cada recálculo do modelo, comparamos os anos com o
+  // valor anterior e marcamos as células que mudaram para um flash sutil. O nonce
+  // força o replay da animação. Ajuste de estado em render (padrão React, sem
+  // efeito): model só muda de identidade quando uma premissa muda.
+  const [prevModel, setPrevModel] = useState(model);
+  const [flash, setFlash] = useState<FlashState>({ cells: {}, nonce: 0 });
+  if (prevModel !== model) {
+    const cells: Record<string, FlashDir> = {};
+    // q = quantização: arredonda à mesma resolução exibida (R$ inteiro / 0,1pp na margem)
+    const mark = (key: string, now: number, before: number, q = 1) => {
+      if (Math.round(now * q) !== Math.round(before * q)) cells[key] = now >= before ? "up" : "down";
+    };
+    model.years.forEach((y, i) => {
+      const p = prevModel.years[i];
+      mark(`rec-${i}`, y.receitaBruta, p.receitaBruta);
+      mark(`ebt-${i}`, y.ebitda, p.ebitda);
+      mark(`mar-${i}`, y.margemEbitda, p.margemEbitda, 1000);
+    });
+    setPrevModel(model);
+    if (Object.keys(cells).length) setFlash((f) => ({ cells, nonce: f.nonce + 1 }));
+  }
+
+  const flashCell = (key: string, text: string, cls = "") => {
+    const dir = flash.cells[key];
+    return (
+      <td key={key} className={cls}>
+        <span key={dir ? `${key}-${flash.nonce}` : key} className={dir ? `flashv flash-${dir}` : undefined}>
+          {text}
+          {dir && <i className="farrow">{dir === "up" ? "▲" : "▼"}</i>}
+        </span>
+      </td>
+    );
+  };
 
   const be = model.breakEven;
   const beText =
@@ -156,19 +263,15 @@ export default function BpPage() {
           <tbody>
             <tr>
               <th>Receita</th>
-              {model.years.map((y, i) => <td key={i}>{fmtBRL(y.receitaBruta, true)}</td>)}
+              {model.years.map((y, i) => flashCell(`rec-${i}`, fmtBRL(y.receitaBruta, true)))}
             </tr>
             <tr>
               <th>EBITDA</th>
-              {model.years.map((y, i) => (
-                <td key={i} className={y.ebitda >= 0 ? "pos" : "neg"}>{fmtBRL(y.ebitda, true)}</td>
-              ))}
+              {model.years.map((y, i) => flashCell(`ebt-${i}`, fmtBRL(y.ebitda, true), y.ebitda >= 0 ? "pos" : "neg"))}
             </tr>
             <tr>
               <th>Margem EBITDA</th>
-              {model.years.map((y, i) => (
-                <td key={i} className={y.ebitda >= 0 ? "pos" : "neg"}>{fmtPct(y.margemEbitda)}</td>
-              ))}
+              {model.years.map((y, i) => flashCell(`mar-${i}`, fmtPct(y.margemEbitda), y.ebitda >= 0 ? "pos" : "neg"))}
             </tr>
             <tr className="be-row">
               <th>Break-even</th>
@@ -179,30 +282,43 @@ export default function BpPage() {
       </div>
 
       <div className="workspace">
-        {/* premissas */}
+        {/* premissas — acordeão por categoria */}
         <aside className="panel">
-          {GROUPS.map((g) => (
-            <div className="pgroup" key={g.title}>
-              <div className="gt">{g.title}</div>
-              {g.note && <div className="gnote">{g.note}</div>}
-              {g.fields.map((f) => {
-                const locked = f.key === "renovacao";
-                return (
-                  <div className={`field${locked ? " locked" : ""}`} key={f.key}>
-                    <div className="flabel">
-                      <span>{f.label}{locked && <span className="lockbadge">ref</span>}</span>
-                      <span className="fval">{fieldText(f, a[f.key])}</span>
-                    </div>
-                    <input
-                      type="range" min={f.min} max={f.max} step={f.step} value={a[f.key]}
-                      onChange={(e) => setField(f.key, Number(e.target.value))}
-                    />
-                    {f.hint && <div className="fhint">{f.hint}</div>}
+          {GROUPS.map((g) => {
+            const open = !!openGroups[g.title];
+            return (
+              <div className={`pgroup${open ? " open" : ""}`} key={g.title}>
+                <button className="ghead" onClick={() => toggleGroup(g.title)} aria-expanded={open}>
+                  <span className="gt">{g.title}</span>
+                  <span className="gmeta">
+                    {!open && <span className="gcount">{g.fields.length} controles</span>}
+                    <span className="gchev" aria-hidden>›</span>
+                  </span>
+                </button>
+                {open && (
+                  <div className="gbody">
+                    {g.note && <div className="gnote">{g.note}</div>}
+                    {g.fields.map((f) => {
+                      const locked = f.key === "renovacao";
+                      return (
+                        <div className={`field${locked ? " locked" : ""}`} key={f.key}>
+                          <div className="flabel">
+                            <span>{f.label}{locked && <span className="lockbadge">ref</span>}</span>
+                            <span className="fval">{fieldText(f, a[f.key])}</span>
+                          </div>
+                          <input
+                            type="range" min={f.min} max={f.max} step={f.step} value={a[f.key]}
+                            onChange={(e) => setField(f.key, Number(e.target.value))}
+                          />
+                          {f.hint && <div className="fhint">{f.hint}</div>}
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
-            </div>
-          ))}
+                )}
+              </div>
+            );
+          })}
         </aside>
 
         {/* charts + cascade */}
@@ -264,22 +380,69 @@ export default function BpPage() {
             </div>
           </div>
 
-          <div className="card cascade">
-            <div className="ct">Cascata de EBITDA</div>
-            <div className="cyearsel">
-              {[0, 1, 2].map((y) => (
-                <button key={y} className={cYear === y ? "on" : ""} onClick={() => setCYear(y)}>Ano {y + 1}</button>
-              ))}
-            </div>
-            {cascade.map((r) => (
-              <div key={r.label} className={`crow ${r.type === "subtotal" ? "subtotal" : ""} ${r.type === "ebitda" ? "ebitda" : ""}`}>
-                <span className="clabel">{r.label}</span>
-                <span className={`cval ${r.value < 0 ? "neg" : ""}`}>{fmtBRL(r.value)}</span>
+          {/* linha inferior: cascata + custos por categoria lado a lado */}
+          <div className="viz-bottom">
+            <div className="card cascade">
+              <div className="ct">Cascata de EBITDA</div>
+              <div className="cyearsel">
+                {[0, 1, 2].map((y) => (
+                  <button key={y} className={cYear === y ? "on" : ""} onClick={() => setCYear(y)}>Ano {y + 1}</button>
+                ))}
               </div>
-            ))}
-            <div className="crow" style={{ borderTop: "none" }}>
-              <span className="clabel" style={{ color: "var(--ink-mute)", fontFamily: "var(--mono)", fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase" }}>Margem EBITDA</span>
-              <span className="cval" style={{ color: "var(--cyan)" }}>{fmtPct(model.years[cYear].margemEbitda)}</span>
+              {cascade.rows.map((r) => {
+                const isExp = r.key ? !!expanded[r.key] : false;
+                return (
+                  <div key={r.label}>
+                    <div
+                      className={`crow ${r.type === "subtotal" ? "subtotal" : ""} ${r.type === "ebitda" ? "ebitda" : ""} ${r.key ? "clickable" : ""} ${isExp ? "open" : ""}`}
+                      onClick={r.key ? () => toggleRow(r.key!) : undefined}
+                      role={r.key ? "button" : undefined}
+                      tabIndex={r.key ? 0 : undefined}
+                      onKeyDown={r.key ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleRow(r.key!); } } : undefined}
+                    >
+                      <span className="clabel">
+                        {r.key && <span className="chev" aria-hidden>›</span>}
+                        {r.label}
+                      </span>
+                      <span className={`cval ${r.value < 0 ? "neg" : ""}`}>{fmtBRL(r.value)}</span>
+                    </div>
+                    {isExp && r.children!.map((c) => (
+                      <div key={c.label} className="crow child">
+                        <span className="clabel">{c.label}</span>
+                        <span className={`cval ${c.value < 0 ? "neg" : ""}`}>{fmtBRL(c.value)}</span>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+              <div className="crow" style={{ borderTop: "none" }}>
+                <span className="clabel" style={{ color: "var(--ink-mute)", fontFamily: "var(--mono)", fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase" }}>Margem EBITDA</span>
+                <span className="cval" style={{ color: "var(--cyan)" }}>{fmtPct(model.years[cYear].margemEbitda)}</span>
+              </div>
+            </div>
+
+            <div className="card costcat">
+              <div className="ct">Custos por categoria · Ano {cYear + 1}</div>
+              <div className="cs">Para onde vai o dinheiro: peso de cada bloco de custo sobre a receita bruta.</div>
+              <div className="catlist">
+                {cascade.categories.map((c) => {
+                  const pct = cascade.receita ? c.value / cascade.receita : 0;
+                  const w = (c.value / maxCat) * 100;
+                  return (
+                    <div className="catrow" key={c.label}>
+                      <div className="cathead">
+                        <span className="catlabel">{c.label}</span>
+                        <span className="catval">{fmtBRL(c.value, true)}<span className="catpct">{fmtPct(pct, 0)}</span></span>
+                      </div>
+                      <div className="cattrack"><div className="catbar" style={{ width: `${w}%` }} /></div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="catfoot">
+                <span>Receita bruta</span>
+                <span className="catfootv">{fmtBRL(cascade.receita, true)}</span>
+              </div>
             </div>
           </div>
         </div>
