@@ -1,0 +1,40 @@
+/* ===== MCP para sócios ==================================================== */
+
+/* caixa do endpoint */
+.endpoint{
+  display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-top:30px;
+  border:1px solid var(--cyan);background:var(--cyan-dim);border-radius:14px;padding:18px 20px;
+}
+.endpoint .ep-label{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--cyan)}
+.endpoint .ep-url{
+  flex:1;min-width:240px;font-family:var(--mono);font-size:14px;color:var(--ink);
+  word-break:break-all;letter-spacing:.01em;
+}
+.endpoint .ep-copy{
+  font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  color:#04201d;background:var(--cyan);border:none;border-radius:100px;padding:8px 16px;cursor:pointer;
+  transition:opacity .2s;white-space:nowrap;
+}
+.endpoint .ep-copy:hover{opacity:.85}
+
+/* passos numerados */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:36px}
+@media(max-width:780px){.steps{grid-template-columns:1fr}}
+.step{border:1px solid var(--hair);border-radius:14px;padding:24px 22px;background:var(--surface-1)}
+.step .snum{
+  font-family:var(--mono);font-size:13px;color:var(--cyan);letter-spacing:.05em;
+  width:30px;height:30px;border:1px solid var(--cyan);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;margin-bottom:16px;
+}
+.step h3{font-family:var(--sans);font-weight:600;font-size:16px;letter-spacing:0;margin-bottom:8px}
+.step p{font-size:13.5px;color:var(--ink-soft);line-height:1.55}
+.step p+p{margin-top:8px}
+.step code{font-family:var(--mono);font-size:12px;color:var(--ink);background:var(--surface-2);border:1px solid var(--hair);border-radius:6px;padding:1px 6px;word-break:break-all}
+
+/* lista de perguntas-exemplo */
+.asks{margin-top:28px;display:flex;flex-direction:column;gap:10px}
+.asks .ask{
+  border-left:2px solid var(--cyan);padding:8px 0 8px 18px;
+  font-family:var(--display);font-style:italic;font-size:clamp(16px,1.9vw,20px);
+  line-height:1.4;color:var(--ink);
+}
