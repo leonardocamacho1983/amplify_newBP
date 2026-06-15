@@ -21,36 +21,45 @@ export default function Mercado() {
           <div className="frow">
             <div className="fbar" style={{ width: "100%" }}>
               <div className="ftag">TAM · universo total <span className="est">estimativa por triangulação</span></div>
-              <div className="fbig"><span className="cy">~45 mil</span> médias empresas no Brasil</div>
-              <div className="fsub"><span className="cy">~R$ 5–6 bi</span> a um ticket médio de programa de ~R$ 130k/ano</div>
+              <div className="fbig"><span className="cy">~45 mil</span> médias empresas não-tech no Brasil</div>
+              <div className="fsub"><span className="cy">~R$ 5–6 bi</span></div>
               <div className="fdesc">Indústria, varejo, serviços, saúde, construção, educação — faturamento ~R$ 4,8M a R$ 300M.</div>
             </div>
           </div>
           <div className="fconn">↓</div>
           <div className="frow">
-            <div className="fbar" style={{ width: "78%" }}>
+            <div className="fbar" style={{ width: "76%" }}>
               <div className="ftag">SAM · mercado endereçável <span className="est">estimativa por triangulação</span></div>
-              <div className="fbig"><span className="cy">~13 mil</span> empresas não-tech da persona</div>
-              <div className="fsub"><span className="cy">~R$ 1,5–1,8 bi</span> de mercado endereçável</div>
-              <div className="fdesc">Já sentem a pressão da cadeia; maturidade digital média a alta e orçamento de capacitação existente.</div>
+              <div className="fbig"><span className="cy">~13 mil</span> empresas da persona</div>
+              <div className="fsub"><span className="cy">~R$ 1,5–1,8 bi</span></div>
+              <div className="fdesc">Já sentem a pressão da cadeia; maturidade digital média a alta.</div>
             </div>
           </div>
           <div className="fconn">↓</div>
           <div className="frow">
-            <div className="fbar" style={{ width: "52%" }}>
-              <div className="ftag">SOM · alcançável agora <span className="est">ano 1</span></div>
-              <div className="fbig"><span className="cy">~R$ 7–8 mi</span> no ano 1</div>
-              <div className="fsub">Limitado por <strong>capacidade de aquisição e entrega</strong> — não por mercado.</div>
-              <div className="fdesc">As que travaram no piloto: dor + referência, sem solução interna. O coração do funil de venda.</div>
+            <div className="fbar" style={{ width: "54%" }}>
+              <div className="ftag">SOM · mercado servível <span className="est">estimativa por triangulação</span></div>
+              <div className="fbig"><span className="cy">~1,5–2 mil</span> empresas</div>
+              <div className="fsub"><span className="cy">~R$ 180–250 mi</span></div>
+              <div className="fdesc">As que travaram no piloto: têm dor, referência e estão no momento de compra.</div>
+            </div>
+          </div>
+          <div className="fconn">↓</div>
+          <div className="frow">
+            <div className="fbar" style={{ width: "34%" }}>
+              <div className="ftag">Meta ano 1 · captura realista <span className="est">meta</span></div>
+              <div className="fbig"><span className="cy">~R$ 7–8 mi</span></div>
+              <div className="fsub">Captura do ano 1.</div>
+              <div className="fdesc">Limitado por capacidade de aquisição e entrega, não por mercado.</div>
             </div>
           </div>
         </div>
 
         <div className="note">
-          <b>Mercado nunca é o gargalo.</b> O dimensionamento vem da triangulação de fontes públicas (Sebrae,
-          IBGE, BNDES). O ponto-chave: o SOM do ano 1 é <strong>menos de 0,5% do SAM</strong> — ou seja, há
-          mercado de sobra. O que limita o crescimento é a <strong>capacidade de aquisição e de entrega</strong>,
-          não o tamanho do mercado. Números marcados como estimativa por triangulação.
+          <b>Mercado nunca é o gargalo.</b> A meta do ano 1 é <strong>~3–4% do SOM</strong> e <strong>~0,5%
+          do SAM</strong> — há mercado de sobra. O que limita o crescimento é a <strong>capacidade de aquisição
+          e de entrega</strong>, não o tamanho do mercado. Dimensionamento por triangulação de fontes públicas
+          (Sebrae, IBGE, BNDES).
         </div>
       </section>
 

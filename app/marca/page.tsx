@@ -8,7 +8,7 @@ export default function Marca() {
     <div className="page">
       <section className="block">
         <span className="eyebrow">A marca</span>
-        <h2>Inteligência como capacidade — não como modinha.</h2>
+        <h2>Inteligência como <span className="cy">capacidade de realizar mais</span>.</h2>
         <div className="body-col">
           <p>
             A Amplify é uma casa de <strong>educação corporativa e consultoria em inteligência artificial</strong>.

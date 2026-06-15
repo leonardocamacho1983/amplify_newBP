@@ -109,6 +109,23 @@
 .rung.journey{margin-left:clamp(0px,8vw,96px);border-color:var(--cyan)}
 @media(max-width:680px){.rung{grid-template-columns:auto 1fr;gap:14px}.rung .rtag{grid-column:2}.rung.paid,.rung.journey{margin-left:0}}
 
+/* pricing ladder */
+.pricing{margin-top:34px;border:1px solid var(--hair);border-radius:14px;overflow:hidden}
+.price-row{display:grid;grid-template-columns:170px 1fr 180px;gap:20px;align-items:center;padding:20px 24px;border-top:1px solid var(--hair);background:var(--bg);transition:background .2s}
+.price-row:first-child{border-top:none}
+.price-row:hover{background:var(--surface-1)}
+.price-row.anchor{background:var(--cyan-dim);border-top:1px solid var(--cyan)}
+.price-row .pr-tag{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--cyan)}
+.price-row .pr-body h4{font-family:var(--sans);font-weight:600;font-size:16px;margin-bottom:5px}
+.price-row .pr-body p{font-size:13.5px;color:var(--ink-soft);line-height:1.55}
+.price-row .pr-body p b{font-family:var(--mono);font-weight:500;color:var(--cyan);font-size:13.5px}
+.price-row .pr-note{font-size:11.5px;color:var(--ink-mute);text-align:right;line-height:1.4}
+@media(max-width:760px){
+  .price-row{grid-template-columns:1fr;gap:8px}
+  .price-row .pr-note{text-align:left}
+  .price-row .pr-note br{display:none}
+}
+
 /* volume funnel */
 .vfunnel{margin-top:34px;display:flex;flex-direction:column;align-items:center;gap:0}
 .vstage{width:100%;display:flex;justify-content:center}

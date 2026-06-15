@@ -36,7 +36,7 @@ export default function Modelo() {
           <div className="quad">
             <div className="qn">04 · Escalar</div>
             <h3>Resultado</h3>
-            <p>A rede de distribuição leva o método a mais empresas; produtos parceiros ampliam o alcance. O resultado de um cliente vira prova social para o próximo.</p>
+            <p>A rede de Amplifiers leva o método a mais empresas; produtos parceiros ampliam o alcance. O resultado de um cliente vira prova social para o próximo.</p>
           </div>
         </div>
         <div className="flow" style={{ marginTop: 28 }}>
@@ -75,7 +75,7 @@ export default function Modelo() {
               <span className="rtag mute">não é receita</span>
             </div>
             <div className="rr">
-              <span className="rname">Rede de distribuição</span>
+              <span className="rname">Rede de Amplifiers</span>
               <span className="rdesc">Canal faseado. Certificação é a entrada; vende em escala nos anos 2-3. Dimensiona comissão, não receita bruta no ano 1.</span>
               <span className="rtag mute">canal</span>
             </div>

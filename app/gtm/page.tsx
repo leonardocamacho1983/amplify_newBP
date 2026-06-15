@@ -97,6 +97,54 @@ export default function Gtm() {
         </section>
       </Reveal>
 
+      {/* BLOCO 2.5 — precificação */}
+      <Reveal>
+        <section className="block">
+          <h3>O preço de cada degrau</h3>
+          <p className="lead" style={{ marginTop: 10 }}>
+            Dos R$ 1.800 de um bootcamp aos seis dígitos do programa anual — é a mesma jornada subindo de ticket.
+          </p>
+          <div className="pricing">
+            <div className="price-row">
+              <div className="pr-tag">a porta</div>
+              <div className="pr-body">
+                <h4>Capacitação aberta</h4>
+                <p>Bootcamp <b>R$ 1.800</b>/pessoa · palestra, workshop, meet-up <b>~R$ 12–16k</b>/evento</p>
+              </div>
+              <div className="pr-note">topo de vendas,<br />se autofinancia</div>
+            </div>
+            <div className="price-row">
+              <div className="pr-tag">continuidade</div>
+              <div className="pr-body">
+                <h4>Comunidade</h4>
+                <p>Club <b>R$ 4.000</b>/mês · Start <b>R$ 600</b>/mês · Expert <b>R$ 350</b>/mês</p>
+              </div>
+              <div className="pr-note">recorrência de baixo ticket,<br />alta retenção</div>
+            </div>
+            <div className="price-row">
+              <div className="pr-tag">entrada no programa</div>
+              <div className="pr-body">
+                <h4>Piloto trimestral</h4>
+                <p><b>R$ 40–120k</b> por trimestre</p>
+              </div>
+              <div className="pr-note">porta mais curta<br />para a transformação</div>
+            </div>
+            <div className="price-row anchor">
+              <div className="pr-tag">o motor</div>
+              <div className="pr-body">
+                <h4>Programa de Transformação</h4>
+                <p>Tier mid <b>R$ 80–250k</b>/ano · tier topo <b>R$ 300–600k</b>/ano · faturado por trimestre, comunidade inclusa</p>
+              </div>
+              <div className="pr-note">recorrente,<br />âncora do modelo</div>
+            </div>
+          </div>
+          <div className="note">
+            <b>A ascensão é a tese.</b> O cliente entra barato pela educação, prova valor na capacitação paga e
+            ascende ao programa recorrente — o motor. Cada degrau financia e qualifica o seguinte.
+          </div>
+        </section>
+      </Reveal>
+
       {/* BLOCO 3 — funil com volume */}
       <Reveal>
         <section className="block">

@@ -58,7 +58,7 @@ export const GROUPS: Group[] = [
     ],
   },
   {
-    title: "Rede de distribuição",
+    title: "Rede de Amplifiers",
     note: "Faseada — benchmark de mercado.",
     fields: [
       { key: "redeMesInicio", label: "Mês de início da rede", min: 1, max: 18, step: 1, kind: "int" },
