@@ -5,9 +5,10 @@ import { runScenario } from "./calc";
 // A planilha é a fonte de verdade; tolerância 2%.
 const REF = {
   realista: {
+    // Com G&A crescente (ano2 = ano1×1,6; ano3 = ano2×1,5).
     receita: [4_700_000, 14_355_000, 22_961_000],
-    ebitda: [797_000, 6_404_000, 11_354_000],
-    margem: [0.170, 0.446, 0.495],
+    ebitda: [797_000, 5_276_000, 8_667_000],
+    margem: [0.170, 0.368, 0.377],
   },
   pessimista: { receitaAno1: 2_625_000, ebitdaAno1: -523_000 },
   otimista: { receitaAno1: 8_161_000, ebitdaAno1: 3_276_000 },

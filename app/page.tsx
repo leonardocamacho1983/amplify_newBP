@@ -20,7 +20,8 @@ export default function Capa() {
           <Link href="/marca">02 · Marca &amp; estratégia</Link>
           <Link href="/mercado">03 · Mercado</Link>
           <Link href="/modelo">04 · Modelo de negócio</Link>
-          <Link href="/bp">05 · BP vivo</Link>
+          <Link href="/gtm">05 · GTM &amp; Funil</Link>
+          <Link href="/bp">06 · BP vivo</Link>
         </div>
       </div>
     </div>

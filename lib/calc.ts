@@ -97,6 +97,13 @@ export const SCENARIOS: Record<ScenarioKey, Assumptions> = {
 
 const round = (x: number) => Math.round(x);
 
+// Crescimento do G&A ao longo dos anos (estrutura escala com a operação).
+// Constantes nomeadas e editáveis: o total anual de G&A cresce sobre o ano anterior.
+//   G&A ano 2 = G&A ano 1 × GA_GROWTH_Y2
+//   G&A ano 3 = G&A ano 2 × GA_GROWTH_Y3
+export const GA_GROWTH_Y2 = 1.6;
+export const GA_GROWTH_Y3 = 1.5;
+
 // Rampa com piso/limite, com ROUND — espelha as fórmulas da planilha:
 //   IF(m < mesInicio, 0, ROUND(pico * MIN(1, (m-mesInicio+1)/(mesPico-mesInicio+1)), 0))
 function rampa(m: number, pico: number, mesPico: number, mesInicio: number): number {
@@ -130,8 +137,15 @@ export interface MonthRow {
   custoRede: number; // formação + time central
   margemOperacional: number;
   gaGestao: number; gaVendas: number; gaMarketing: number; gaProduto: number; gaSoftware: number;
+  ga: number; // G&A efetivo do mês (com crescimento aplicado nos anos 2-3)
   ebitda: number;
   ebitdaAcumulado: number;
+}
+
+export type BreakEvenStatus = "from-start" | "month" | "never";
+export interface BreakEven {
+  status: BreakEvenStatus;
+  month: number | null;
 }
 
 export interface YearAgg {
@@ -146,7 +160,7 @@ export interface YearAgg {
 export interface ModelResult {
   months: MonthRow[];
   years: [YearAgg, YearAgg, YearAgg];
-  breakEvenMonth: number | null; // primeiro mês com EBITDA acumulado >= 0
+  breakEven: BreakEven;
 }
 
 // ============================================================================
@@ -160,6 +174,7 @@ export function runModel(a: Assumptions): ModelResult {
   let clubAtivos = 0, startAtivos = 0, expertAtivos = 0;
   let prevRedeAtivos = 0;
   let ebitdaAcum = 0;
+  let gaAno1Abs = 0; // total absoluto de G&A do ano 1 (base do crescimento dos anos 2-3)
 
   for (let m = 1; m <= 36; m++) {
     // ---- Programa de Transformação (Receita rows 4-7) ----
@@ -240,7 +255,7 @@ export function runModel(a: Assumptions): ModelResult {
     const custoRede = -(custoTimeRede + custoFormacaoRede);
     const margemOperacional = margemContribuicao + comissaoInterna - comissaoRede + custoRede;
 
-    // G&A (P&L rows 15-19) — degraus fixos
+    // G&A ano 1 (P&L rows 15-19) — degraus fixos de contratação durante o 1º ano.
     const gaGestao = -(m <= 2 ? 31800 : 41800);
     const gaVendas = -(m <= 3 ? 43000 : 51000);
     const gaMarketing = -(m <= 12 ? 18000 : 10000);
@@ -248,7 +263,21 @@ export function runModel(a: Assumptions): ModelResult {
     // G&A Software/Jurídico/PR/Ads (spec §7): 6k (m1) → 27k (m2) → 42k (m3+).
     const gaSoftware = -(m <= 1 ? 6000 : m <= 2 ? 27000 : 42000);
 
-    const ebitda = margemOperacional + gaGestao + gaVendas + gaMarketing + gaProduto + gaSoftware;
+    // G&A efetivo do mês. Ano 1 = degraus reais (acumula o total do ano 1).
+    // Anos 2-3 = total anual cresce sobre o ano anterior (GA_GROWTH_*), distribuído
+    // uniformemente nos 12 meses. É o que corrige a margem inflada dos anos seguintes.
+    const rawGA = gaGestao + gaVendas + gaMarketing + gaProduto + gaSoftware;
+    let ga: number;
+    if (m <= 12) {
+      ga = rawGA;
+      gaAno1Abs += -rawGA;
+    } else if (m <= 24) {
+      ga = -(gaAno1Abs * GA_GROWTH_Y2) / 12;
+    } else {
+      ga = -(gaAno1Abs * GA_GROWTH_Y2 * GA_GROWTH_Y3) / 12;
+    }
+
+    const ebitda = margemOperacional + ga;
     ebitdaAcum += ebitda;
 
     months.push({
@@ -260,7 +289,7 @@ export function runModel(a: Assumptions): ModelResult {
       impostos, receitaLiquida,
       cogsProgramas, cogsBootcamp, cogsComunidade, margemContribuicao,
       comissaoInterna, custoRede, margemOperacional,
-      gaGestao, gaVendas, gaMarketing, gaProduto, gaSoftware,
+      gaGestao, gaVendas, gaMarketing, gaProduto, gaSoftware, ga,
       ebitda, ebitdaAcumulado: ebitdaAcum,
     });
   }
@@ -281,24 +310,29 @@ export function runModel(a: Assumptions): ModelResult {
     };
   };
 
-  // Break-even (virada sustentada, spec §7): primeiro mês a partir do qual o
-  // EBITDA acumulado fica positivo e NÃO volta a ficar negativo até o mês 36.
-  // null = não atinge break-even em 36 meses.
-  let breakEvenMonth: number | null = null;
-  for (const r of months) {
-    if (r.ebitdaAcumulado >= 0) {
-      const recai = months.slice(r.m).some((later) => later.ebitdaAcumulado < 0);
-      if (!recai) {
-        breakEvenMonth = r.m;
+  // Break-even (virada sustentada):
+  //  - "from-start": o acumulado nunca fica negativo (positivo desde o início).
+  //  - "month": primeiro mês em que o acumulado fica ≥ 0 e não recai até o mês 36.
+  //  - "never": existe vale e ele não se recupera de forma sustentada em 36 meses.
+  let breakEven: BreakEven;
+  const everNegative = months.some((r) => r.ebitdaAcumulado < 0);
+  if (!everNegative) {
+    breakEven = { status: "from-start", month: null };
+  } else {
+    let m: number | null = null;
+    for (const r of months) {
+      if (r.ebitdaAcumulado >= 0 && !months.slice(r.m).some((l) => l.ebitdaAcumulado < 0)) {
+        m = r.m;
         break;
       }
     }
+    breakEven = m ? { status: "month", month: m } : { status: "never", month: null };
   }
 
   return {
     months,
     years: [aggYear(0), aggYear(12), aggYear(24)],
-    breakEvenMonth,
+    breakEven,
   };
 }
 

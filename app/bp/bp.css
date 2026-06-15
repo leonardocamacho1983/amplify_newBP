@@ -18,7 +18,31 @@
 }
 .reset-btn:hover{border-color:var(--cyan);color:var(--cyan)}
 
-/* cover KPIs */
+/* 3-year table */
+.yeartable{width:100%;border-collapse:collapse;margin-top:26px;border:1px solid var(--hair);border-radius:14px;overflow:hidden}
+.yeartable thead th{
+  font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-mute);
+  font-weight:400;text-align:right;padding:14px 22px;background:var(--surface-1);border-bottom:1px solid var(--hair);
+}
+.yeartable thead th:first-child{text-align:left}
+.yeartable tbody th{
+  text-align:left;font-family:var(--sans);font-weight:600;font-size:13.5px;color:var(--ink-soft);
+  padding:16px 22px;border-top:1px solid var(--hair);white-space:nowrap;
+}
+.yeartable tbody td{
+  text-align:right;font-family:var(--display);font-size:clamp(20px,2.4vw,27px);letter-spacing:-.01em;
+  color:var(--ink);padding:14px 22px;border-top:1px solid var(--hair);font-variant-numeric:tabular-nums;
+}
+.yeartable tbody td.pos{color:var(--cyan)}
+.yeartable tbody td.neg{color:var(--negative)}
+.yeartable tr.be-row th,.yeartable tr.be-row td{border-top:1px solid var(--hair-strong)}
+.yeartable tr.be-row td{font-family:var(--sans);font-size:15px;font-weight:600}
+@media(max-width:680px){
+  .yeartable tbody td{font-size:18px;padding:12px 14px}
+  .yeartable thead th,.yeartable tbody th{padding:12px 14px}
+}
+
+/* cover KPIs (legado) */
 .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--hair);border:1px solid var(--hair);border-radius:14px;overflow:hidden;margin-top:26px}
 .kpi{background:var(--bg);padding:22px 22px}
 .kpi .k{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-mute)}

@@ -9,7 +9,8 @@ const NAV = [
   { href: "/marca", idx: "02", label: "Marca & estratégia" },
   { href: "/mercado", idx: "03", label: "Mercado" },
   { href: "/modelo", idx: "04", label: "Modelo de negócio" },
-  { href: "/bp", idx: "05", label: "BP vivo" },
+  { href: "/gtm", idx: "05", label: "GTM & Funil" },
+  { href: "/bp", idx: "06", label: "BP vivo" },
 ];
 
 export default function SideNav() {

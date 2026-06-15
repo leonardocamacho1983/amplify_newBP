@@ -51,7 +51,7 @@ function cascadeForYear(m: ModelResult, y: number) {
   const cogs = sum((r) => r.cogsProgramas + r.cogsBootcamp + r.cogsComunidade);
   const comissoes = sum((r) => r.comissaoInterna - r.comissaoRede);
   const custoRede = sum((r) => r.custoRede);
-  const ga = sum((r) => r.gaGestao + r.gaVendas + r.gaMarketing + r.gaProduto + r.gaSoftware);
+  const ga = sum((r) => r.ga);
   const recLiq = receita + impostos;
   const mc = recLiq + cogs;
   const mo = mc + comissoes + custoRede;
@@ -108,8 +108,18 @@ export default function BpPage() {
     [model]
   );
 
-  const ebAno1 = model.years[0].ebitda;
-  const be = model.breakEvenMonth;
+  const be = model.breakEven;
+  const beText =
+    be.status === "from-start" ? "Positivo desde o início" :
+    be.status === "month" ? `Mês ${be.month}` :
+    "Não atinge em 36 meses";
+  const beShort =
+    be.status === "from-start" ? "desde o início" :
+    be.status === "month" ? `mês ${be.month}` :
+    "não em 36 meses";
+
+  // vale = existe EBITDA mensal negativo no cenário ativo (só ocorre no pessimista típico)
+  const temVale = model.months.some((r) => r.ebitda < 0);
 
   return (
     <div className="page">
@@ -134,24 +144,38 @@ export default function BpPage() {
           </button>
         </div>
 
-        <div className="kpis">
-          <div className="kpi">
-            <div className="k">Receita ano 3</div>
-            <div className="v">{fmtBRL(model.years[2].receitaBruta, true)}</div>
-          </div>
-          <div className="kpi">
-            <div className="k">EBITDA ano 1</div>
-            <div className={`v ${ebAno1 >= 0 ? "pos" : "neg"}`}>{fmtBRL(ebAno1, true)}</div>
-          </div>
-          <div className="kpi">
-            <div className="k">Margem EBITDA ano 3</div>
-            <div className="v pos">{fmtPct(model.years[2].margemEbitda)}</div>
-          </div>
-          <div className="kpi">
-            <div className="k">Break-even</div>
-            <div className="v">{be ? `Mês ${be}` : "—"}</div>
-          </div>
-        </div>
+        <table className="yeartable">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Ano 1</th>
+              <th>Ano 2</th>
+              <th>Ano 3</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th>Receita</th>
+              {model.years.map((y, i) => <td key={i}>{fmtBRL(y.receitaBruta, true)}</td>)}
+            </tr>
+            <tr>
+              <th>EBITDA</th>
+              {model.years.map((y, i) => (
+                <td key={i} className={y.ebitda >= 0 ? "pos" : "neg"}>{fmtBRL(y.ebitda, true)}</td>
+              ))}
+            </tr>
+            <tr>
+              <th>Margem EBITDA</th>
+              {model.years.map((y, i) => (
+                <td key={i} className={y.ebitda >= 0 ? "pos" : "neg"}>{fmtPct(y.margemEbitda)}</td>
+              ))}
+            </tr>
+            <tr className="be-row">
+              <th>Break-even</th>
+              <td colSpan={3} className={be.status === "never" ? "neg" : "pos"}>{beText}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <div className="workspace">
@@ -203,30 +227,38 @@ export default function BpPage() {
           </div>
 
           <div className="card">
-            <div className="ct">EBITDA mensal · o vale e a virada</div>
-            <div className="cs">Investe-se na estrutura cedo; a virada sustentada {be ? `acontece no mês ${be}` : "não ocorre em 36 meses"}.</div>
+            <div className="ct">EBITDA mensal e acumulado · 36 meses</div>
+            <div className="cs">
+              {temVale
+                ? `A operação passa por um vale antes da virada sustentada (${beShort}).`
+                : `Sem vale neste cenário: o acumulado fica positivo ${beShort}. Eixos independentes — mensal à esquerda, acumulado à direita.`}
+            </div>
             <div className="chart-wrap">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={ebitdaLine} margin={{ top: 6, right: 10, left: 6, bottom: 0 }}>
+                <LineChart data={ebitdaLine} margin={{ top: 6, right: 6, left: 6, bottom: 0 }}>
                   <CartesianGrid stroke="rgba(246,247,244,.06)" vertical={false} />
                   <XAxis dataKey="m" tick={{ fill: "#737977", fontSize: 11 }} axisLine={{ stroke: "rgba(246,247,244,.12)" }} tickLine={false} ticks={[1, 6, 12, 18, 24, 30, 36]} />
-                  <YAxis tickFormatter={(v) => fmtBRL(v, true)} tick={{ fill: "#737977", fontSize: 11 }} axisLine={false} tickLine={false} width={60} />
+                  {/* Eixo esquerdo: EBITDA mensal (auto-escala à faixa do cenário). */}
+                  <YAxis yAxisId="mes" tickFormatter={(v) => fmtBRL(v, true)} tick={{ fill: "#2dd4bf", fontSize: 11 }} axisLine={false} tickLine={false} width={56} domain={["auto", "auto"]} />
+                  {/* Eixo direito: EBITDA acumulado. */}
+                  <YAxis yAxisId="acum" orientation="right" tickFormatter={(v) => fmtBRL(v, true)} tick={{ fill: "#9b9f9d", fontSize: 11 }} axisLine={false} tickLine={false} width={56} domain={["auto", "auto"]} />
                   <Tooltip
                     cursor={{ stroke: "rgba(45,212,191,.3)" }}
                     content={({ active, payload, label }) =>
                       active && payload?.length ? (
                         <div style={{ background: "#0a0a0a", border: "1px solid rgba(246,247,244,.16)", borderRadius: 10, padding: "10px 13px", fontSize: 12 }}>
                           <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "#737977", marginBottom: 4 }}>MÊS {label}</div>
-                          <div style={{ color: "#f6f7f4" }}>EBITDA: <span style={{ fontFamily: "var(--mono)" }}>{fmtBRL(Number(payload[0].value), true)}</span></div>
-                          <div style={{ color: "#9b9f9d" }}>Acum.: <span style={{ fontFamily: "var(--mono)" }}>{fmtBRL(Number(payload[1].value), true)}</span></div>
+                          <div style={{ color: "#2dd4bf" }}>EBITDA mensal: <span style={{ fontFamily: "var(--mono)" }}>{fmtBRL(Number(payload[0].value), true)}</span></div>
+                          <div style={{ color: "#9b9f9d" }}>Acumulado: <span style={{ fontFamily: "var(--mono)" }}>{fmtBRL(Number(payload[1].value), true)}</span></div>
                         </div>
                       ) : null
                     }
                   />
-                  <ReferenceLine y={0} stroke="rgba(246,247,244,.2)" />
-                  {be && <ReferenceLine x={be} stroke="rgba(45,212,191,.4)" strokeDasharray="3 3" />}
-                  <Line type="monotone" dataKey="ebitda" stroke="#2dd4bf" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="acum" stroke="#6b7a77" strokeWidth={1.4} dot={false} strokeDasharray="4 3" />
+                  <Legend wrapperStyle={{ fontSize: 12 }} iconType="plainline" />
+                  <ReferenceLine yAxisId="mes" y={0} stroke="rgba(246,247,244,.2)" />
+                  {be.status === "month" && be.month && <ReferenceLine yAxisId="mes" x={be.month} stroke="rgba(45,212,191,.4)" strokeDasharray="3 3" />}
+                  <Line yAxisId="mes" name="EBITDA mensal" type="monotone" dataKey="ebitda" stroke="#2dd4bf" strokeWidth={2} dot={false} />
+                  <Line yAxisId="acum" name="EBITDA acumulado" type="monotone" dataKey="acum" stroke="#6b7a77" strokeWidth={1.4} dot={false} strokeDasharray="4 3" />
                 </LineChart>
               </ResponsiveContainer>
             </div>
