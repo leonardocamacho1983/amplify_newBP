@@ -1,66 +1,28 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import Link from "next/link";
+import "./content.css";
 
-export default function Home() {
+export default function Capa() {
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="page capa">
+      <div className="ring" aria-hidden />
+      <div style={{ position: "relative", zIndex: 2 }}>
+        <span className="eyebrow">Sala de decisão · 2026</span>
+        <h1>
+          Inteligência como <span className="cy">capacidade da empresa</span> — e um plano para chegar lá.
+        </h1>
+        <p className="lead">
+          Documento interno dos sócios. Persona, marca, mercado e modelo de negócio — e um BP vivo onde as
+          premissas viram receita, custo e EBITDA em tempo real, nos três cenários.
+        </p>
+        <Link href="/bp" className="enter">Abrir o BP vivo →</Link>
+        <div className="links">
+          <Link href="/persona">01 · Persona &amp; ICP</Link>
+          <Link href="/marca">02 · Marca &amp; estratégia</Link>
+          <Link href="/mercado">03 · Mercado</Link>
+          <Link href="/modelo">04 · Modelo de negócio</Link>
+          <Link href="/bp">05 · BP vivo</Link>
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </div>
     </div>
   );
 }
