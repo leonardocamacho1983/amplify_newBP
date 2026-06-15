@@ -11,14 +11,23 @@
 // (algumas propostas) e mantém a implementação simples.
 // ============================================================================
 import type { ScenarioKey } from "@/lib/calc";
+import type { YearSummary } from "./summary";
 
 export interface Proposal {
   id: string;
   nome: string;
   autor?: string;
-  nota?: string;
+  /** justificativa livre — "por que isso é relevante" */
+  justificativa?: string;
   cenarioBase: ScenarioKey;
   overrides: Record<string, number>;
+  /** snapshot do resultado no momento do registro (preserva o que foi visto,
+   *  mesmo que o motor evolua para v9 depois) */
+  resultado?: { anos: YearSummary[]; breakEven: { status: string; mes: number | null } };
+  /** motor de cálculo usado (hoje sempre "v8") */
+  motor: string;
+  /** true se alguma premissa estava fora do território testado (faixa vermelha) */
+  extrapolacao: boolean;
   criadoEm: string; // ISO
 }
 
@@ -83,6 +92,7 @@ export async function getProposal(id: string): Promise<Proposal | undefined> {
 }
 
 export async function addProposal(p: Omit<Proposal, "id" | "criadoEm">): Promise<Proposal> {
+  // (id e timestamp gerados no servidor)
   const store = getStore();
   const list = await store.list();
   const proposal: Proposal = {

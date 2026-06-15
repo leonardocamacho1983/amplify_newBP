@@ -32,15 +32,45 @@ Depois é só pedir em linguagem natural, por exemplo:
 
 | Ferramenta          | O que faz |
 | ------------------- | --------- |
-| `listar_premissas`  | Lista as alavancas: rótulo, grupo, unidade, faixa min/max e o valor em cada cenário base. |
+| `listar_premissas`  | Lista as alavancas: rótulo, grupo, unidade, **faixa validada** (verde), **faixa plausível** (amarela) e o valor em cada cenário base. |
 | `rodar_cenario`     | Roda pessimista / realista / otimista: receita, EBITDA e margem por ano, break-even e custos por categoria. |
-| `simular`           | Parte de um cenário base e aplica overrides nas alavancas; devolve o resultado e o **delta** vs. a base. |
+| `simular`           | Parte de um cenário base e aplica overrides nas alavancas; devolve o resultado e o **delta** vs. a base, com a faixa de validade de cada alavanca. |
 | `comparar`          | Coloca várias variantes lado a lado. |
-| `salvar_proposta`   | Salva uma proposta nomeada (base + overrides + nota) para os fundadores revisarem. |
-| `listar_propostas`  | Lista as propostas salvas. |
-| `ver_proposta`      | Abre uma proposta por id e recalcula o resultado atual. |
+| `salvar_proposta`   | Registra uma simulação (base + overrides + **justificativa**) com data e snapshot do resultado, para os fundadores revisarem. |
+| `listar_propostas`  | Lista as simulações registradas. |
+| `ver_proposta`      | Abre um registro por id e recalcula o resultado atual. |
 
-Valores fora da faixa de um slider são **fixados no limite** e reportados em `avisos`.
+### Faixas de validade
+
+Cada override é classificado em três faixas, derivadas dos cenários e do painel:
+
+- **verde** — dentro do intervalo dos cenários (modelo validado);
+- **amarela** — fora dos cenários, mas dentro da faixa plausível do painel (extrapolação razoável);
+- **vermelha** — fora do painel (território não testado).
+
+Os valores **não são fixados no limite** — o motor aceita qualquer número. Mas se algum
+override cair na faixa **vermelha**, `simular` **não mostra os números**: devolve
+`requerConfirmacao: true` com os alertas. O cliente deve avisar o usuário e, se confirmado,
+chamar de novo com `confirmarExtrapolacao: true`.
+
+### Histórico de simulações — `GET /api/mcp/log`
+
+As simulações salvas com `salvar_proposta` ficam legíveis para os fundadores:
+
+```
+GET /api/mcp/log            # últimos 20
+GET /api/mcp/log?limit=50   # últimos 50
+GET /api/mcp/log?token=...  # se MCP_TOKEN estiver definido (ou header Authorization: Bearer)
+```
+
+Cada registro traz: data, autor, justificativa, cenário base, premissas, snapshot do
+resultado e o motor usado.
+
+### Versão do motor
+
+Tudo roda sobre o **motor v8** (`lib/calc.ts`), marcado em `motor: "v8"` nas respostas.
+Quando o **v9** chegar, ele ganha um endpoint próprio (`/api/mcp/v9`) e o v8 segue
+acessível em `/api/mcp` para comparação.
 
 ## Configuração (variáveis de ambiente)
 

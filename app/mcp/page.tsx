@@ -2,6 +2,7 @@ import "../content.css";
 import "./mcp.css";
 import Reveal from "../components/Reveal";
 import EndpointBox from "./EndpointBox";
+import StarterQuestions from "./StarterQuestions";
 
 export const metadata = { title: "MCP para sócios · Amplify" };
 
@@ -13,13 +14,6 @@ const TOOLS = [
   { name: "salvar_proposta", desc: "Salva uma proposta nomeada (base + mudanças + nota) para os fundadores revisarem depois." },
   { name: "listar_propostas", desc: "Lista as propostas salvas, mais recentes primeiro." },
   { name: "ver_proposta", desc: "Abre uma proposta por id e recalcula o resultado atual dela." },
-];
-
-const ASKS = [
-  "Liste as alavancas do BP e seus limites.",
-  "E se a gente fechar 8 contratos mid por mês em vez de 3? Como fica o EBITDA?",
-  "Compara dobrar os bootcamps vs. acelerar a rede de Amplifiers.",
-  "Salva isso como proposta 'Foco em comunidade' pra eu mostrar aos fundadores.",
 ];
 
 export default function McpPage() {
@@ -69,15 +63,33 @@ export default function McpPage() {
         </section>
       </Reveal>
 
-      {/* BLOCO 3 — exemplos */}
+      {/* BLOCO 3 — por onde começar (perguntas prontas) */}
       <Reveal>
         <section className="block">
-          <h3>O que dá pra pedir</h3>
+          <h3>Por onde começar</h3>
           <p className="lead" style={{ marginTop: 10 }}>
-            Linguagem natural. A IA traduz para as alavancas e devolve o impacto no EBITDA.
+            Seis perguntas prontas. Clique para copiar e cole direto no Claude — depois é só seguir a conversa.
           </p>
-          <div className="asks">
-            {ASKS.map((a) => <div className="ask" key={a}>“{a}”</div>)}
+          <StarterQuestions />
+        </section>
+      </Reveal>
+
+      {/* BLOCO 3.5 — faixas de validade */}
+      <Reveal>
+        <section className="block">
+          <h3>Até onde o modelo foi testado</h3>
+          <p className="lead" style={{ marginTop: 10 }}>
+            Cada alavanca tem uma faixa de validade. Se você extrapolar, o MCP avisa antes de mostrar o número.
+          </p>
+          <div className="bands">
+            <div className="band verde"><span className="bdot" /><b>Verde</b><span>Dentro dos cenários — modelo validado.</span></div>
+            <div className="band amarela"><span className="bdot" /><b>Amarela</b><span>Extrapolação razoável, dentro do plausível.</span></div>
+            <div className="band vermelha"><span className="bdot" /><b>Vermelha</b><span>Fora do território testado — o MCP pede confirmação.</span></div>
+          </div>
+          <div className="note">
+            <b>Exemplo.</b> Ao simular 15 contratos mid/mês (validado até 5), o Claude responde algo como:
+            <em> “este resultado é uma extrapolação fora do que foi testado — quer continuar?”</em> Só calcula
+            depois que você confirma.
           </div>
         </section>
       </Reveal>
@@ -98,8 +110,10 @@ export default function McpPage() {
             ))}
           </div>
           <div className="note">
-            <b>Limites respeitados.</b> Se você pedir um valor fora da faixa de uma alavanca, o modelo fixa no
-            limite e avisa — ninguém simula o impossível. A planilha v8 segue sendo a fonte de verdade.
+            <b>Histórico para os fundadores.</b> Quando você pede para salvar uma simulação, ela fica registrada
+            com data, premissas, resultado e a sua justificativa. Os fundadores revisam tudo em
+            <code> /api/mcp/log</code>. Motor atual: <b>v8</b> — quando o v9 chegar, ele ganha um endpoint próprio
+            e o v8 continua acessível para comparação.
           </div>
         </section>
       </Reveal>

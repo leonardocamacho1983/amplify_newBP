@@ -31,10 +31,29 @@
 .step p+p{margin-top:8px}
 .step code{font-family:var(--mono);font-size:12px;color:var(--ink);background:var(--surface-2);border:1px solid var(--hair);border-radius:6px;padding:1px 6px;word-break:break-all}
 
-/* lista de perguntas-exemplo */
-.asks{margin-top:28px;display:flex;flex-direction:column;gap:10px}
-.asks .ask{
-  border-left:2px solid var(--cyan);padding:8px 0 8px 18px;
-  font-family:var(--display);font-style:italic;font-size:clamp(16px,1.9vw,20px);
-  line-height:1.4;color:var(--ink);
+/* perguntas prontas — clicar para copiar */
+.starters{margin-top:30px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:780px){.starters{grid-template-columns:1fr}}
+.starter{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;text-align:left;
+  border:1px solid var(--hair);border-radius:12px;background:var(--surface-1);padding:16px 18px;
+  cursor:pointer;transition:border-color .2s,background .2s;width:100%;
 }
+.starter:hover{border-color:var(--cyan);background:var(--surface-2)}
+.starter .starter-q{font-family:var(--display);font-style:italic;font-size:15.5px;line-height:1.4;color:var(--ink)}
+.starter .starter-copy{
+  flex-shrink:0;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--ink-mute);border:1px solid var(--hair-strong);border-radius:100px;padding:5px 11px;transition:color .2s,border-color .2s;
+}
+.starter:hover .starter-copy{color:var(--cyan);border-color:var(--cyan)}
+
+/* faixas de validade */
+.bands{margin-top:28px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:780px){.bands{grid-template-columns:1fr}}
+.band{border:1px solid var(--hair);border-radius:12px;background:var(--surface-1);padding:18px 18px;display:flex;flex-direction:column;gap:6px}
+.band .bdot{width:10px;height:10px;border-radius:50%}
+.band b{font-size:14px;color:var(--ink)}
+.band span:last-child{font-size:13px;color:var(--ink-soft);line-height:1.5}
+.band.verde .bdot{background:var(--cyan);box-shadow:0 0 10px var(--cyan-glow)}
+.band.amarela .bdot{background:#d9c27a}
+.band.vermelha .bdot{background:var(--negative)}

@@ -36,32 +36,51 @@ describe("MCP server", () => {
     expect(anos[0].receitaBruta).toBeLessThan(5_500_000);
   });
 
-  it("simular aplica override e calcula delta positivo ao subir contratos", async () => {
+  it("simular aplica override (faixa amarela) e calcula delta positivo", async () => {
+    // contratosMidPico=8: acima do otimista (5), dentro do painel (max 10) → amarela
     const r = await call("simular", { base: "realista", overrides: { contratosMidPico: 8 } });
-    const sc = r.structuredContent as { delta: { ebitda: number }[]; overridesAplicados: Record<string, number> };
+    const sc = r.structuredContent as {
+      delta: { ebitda: number }[]; overridesAplicados: Record<string, number>;
+      faixas: Record<string, string>; resultado: unknown;
+    };
     expect(sc.overridesAplicados.contratosMidPico).toBe(8);
+    expect(sc.faixas.contratosMidPico).toBe("amarela");
+    expect(sc.resultado).not.toBeNull();
     expect(sc.delta[0].ebitda).toBeGreaterThan(0);
   });
 
-  it("simular fixa valores fora da faixa e avisa", async () => {
-    const r = await call("simular", { base: "realista", overrides: { contratosMidPico: 999 } });
-    const sc = r.structuredContent as { overridesAplicados: Record<string, number>; avisos: { key: string }[] };
-    expect(sc.overridesAplicados.contratosMidPico).toBe(10); // max do slider
-    expect(sc.avisos.some((a) => a.key === "contratosMidPico")).toBe(true);
+  it("simular em faixa vermelha pede confirmação antes de mostrar números", async () => {
+    const r = await call("simular", { base: "realista", overrides: { contratosMidPico: 15 } });
+    const sc = r.structuredContent as { requerConfirmacao?: boolean; resultado: unknown; alertasVermelhos: { key: string }[] };
+    expect(sc.requerConfirmacao).toBe(true);
+    expect(sc.resultado).toBeNull();
+    expect(sc.alertasVermelhos.some((a) => a.key === "contratosMidPico")).toBe(true);
   });
 
-  it("salvar e ver proposta (store em memória)", async () => {
+  it("simular calcula a extrapolação quando confirmarExtrapolacao=true", async () => {
+    const r = await call("simular", { base: "realista", overrides: { contratosMidPico: 15 }, confirmarExtrapolacao: true });
+    const sc = r.structuredContent as { requerConfirmacao?: boolean; resultado: unknown; extrapolacao: boolean };
+    expect(sc.requerConfirmacao).toBeUndefined();
+    expect(sc.resultado).not.toBeNull();
+    expect(sc.extrapolacao).toBe(true);
+  });
+
+  it("salvar registra com justificativa, snapshot e motor v8; ver recalcula", async () => {
     const saved = await call("salvar_proposta", {
-      nome: "Mais bootcamps", base: "realista", overrides: { bootcampsAno1: 15 }, autor: "sócio",
+      nome: "Mais bootcamps", base: "realista", overrides: { bootcampsAno1: 15 },
+      autor: "sócio", justificativa: "testar capacidade de entrega",
     });
-    const id = (saved.structuredContent as { proposta: { id: string } }).proposta.id;
-    expect(id).toMatch(/^prop_/);
+    const reg = (saved.structuredContent as { registro: { id: string; justificativa: string; motor: string; resultado: unknown } }).registro;
+    expect(reg.id).toMatch(/^prop_/);
+    expect(reg.justificativa).toBe("testar capacidade de entrega");
+    expect(reg.motor).toBe("v8");
+    expect(reg.resultado).toBeTruthy();
 
     const lista = await call("listar_propostas");
     expect((lista.structuredContent as { total: number }).total).toBeGreaterThanOrEqual(1);
 
-    const ver = await call("ver_proposta", { id });
-    expect((ver.structuredContent as { proposta: { nome: string } }).proposta.nome).toBe("Mais bootcamps");
+    const ver = await call("ver_proposta", { id: reg.id });
+    expect((ver.structuredContent as { registro: { nome: string } }).registro.nome).toBe("Mais bootcamps");
   });
 
   it("ferramenta desconhecida retorna isError", async () => {
