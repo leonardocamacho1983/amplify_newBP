@@ -190,11 +190,10 @@ export function runModel(a: Assumptions): ModelResult {
     const expertReceita = expertAtivos * a.expertTicket;
 
     // ---- RECEITA BRUTA TOTAL (Receita row 16) ----
-    // QUIRK DA PLANILHA: a fórmula é =recMid+recTopo+recBootcamp+recOutras
-    //   + START_ATIVOS + EXPERT_ATIVOS (rows 11 e 13, contagens, não receitas)
-    //   + row15 (vazia). Club receita e as receitas reais de comunidade NÃO
-    //   entram no total. Reproduzido fielmente para bater com a referência.
-    const receitaBruta = recMid + recTopo + recBootcamp + recOutras + startAtivos + expertAtivos;
+    // Planilha corrigida: = recMid + recTopo + recBootcamp + recOutras
+    //   + receita REAL de comunidade em R$ (Club + Start + Expert, rows 10/12/14).
+    const recComunidade = clubReceita + startReceita + expertReceita;
+    const receitaBruta = recMid + recTopo + recBootcamp + recOutras + recComunidade;
 
     // ---- Rede de distribuição (aba Rede) ----
     let redeAtivos: number;
@@ -231,10 +230,8 @@ export function runModel(a: Assumptions): ModelResult {
     else custoBootcampMes = (a.bootcampsAno1 * a.crescBootcamp * a.crescBootcamp / 12) * a.custoBootcamp;
     const cogsBootcamp = -(custoBootcampMes + outrasEventos * a.custoOutras);
 
-    // COGS comunidade (P&L row 9)
-    // QUIRK DA PLANILHA: = (START_ATIVOS + EXPERT_ATIVOS) * custoComunidade
-    //   (rows 11,13,15 — mesmo padrão do total; Club e receitas reais ausentes).
-    const cogsComunidade = -(startAtivos + expertAtivos) * a.custoComunidade;
+    // COGS comunidade (P&L row 9) — incide sobre a receita real de comunidade.
+    const cogsComunidade = -recComunidade * a.custoComunidade;
 
     const margemContribuicao = receitaLiquida + cogsProgramas + cogsBootcamp + cogsComunidade;
 
@@ -248,8 +245,7 @@ export function runModel(a: Assumptions): ModelResult {
     const gaVendas = -(m <= 3 ? 43000 : 51000);
     const gaMarketing = -(m <= 12 ? 18000 : 10000);
     const gaProduto = -(m <= 2 ? 0 : 21000);
-    // QUIRK/NOTA: esta linha (Software/Jurídico/PR/Ads) existe na planilha mas
-    // não consta na seção 5/6 da spec. É necessária para bater o EBITDA.
+    // G&A Software/Jurídico/PR/Ads (spec §7): 6k (m1) → 27k (m2) → 42k (m3+).
     const gaSoftware = -(m <= 1 ? 6000 : m <= 2 ? 27000 : 42000);
 
     const ebitda = margemOperacional + gaGestao + gaVendas + gaMarketing + gaProduto + gaSoftware;
@@ -285,12 +281,24 @@ export function runModel(a: Assumptions): ModelResult {
     };
   };
 
-  const breakEven = months.find((r) => r.ebitdaAcumulado >= 0);
+  // Break-even (virada sustentada, spec §7): primeiro mês a partir do qual o
+  // EBITDA acumulado fica positivo e NÃO volta a ficar negativo até o mês 36.
+  // null = não atinge break-even em 36 meses.
+  let breakEvenMonth: number | null = null;
+  for (const r of months) {
+    if (r.ebitdaAcumulado >= 0) {
+      const recai = months.slice(r.m).some((later) => later.ebitdaAcumulado < 0);
+      if (!recai) {
+        breakEvenMonth = r.m;
+        break;
+      }
+    }
+  }
 
   return {
     months,
     years: [aggYear(0), aggYear(12), aggYear(24)],
-    breakEvenMonth: breakEven ? breakEven.m : null,
+    breakEvenMonth,
   };
 }
 
